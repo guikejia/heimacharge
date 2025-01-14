@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Guikejia\HeiMaCharge;
 
 use Hyperf\Contract\ConfigInterface;
