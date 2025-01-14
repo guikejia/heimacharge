@@ -11,7 +11,7 @@ use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\StationRangeSpace;
 class ChargeStationManagement implements ChargeStationManagementInterface
 {
     public function __construct(
-        protected HttpClientFactory $http,
+        protected HttpClient $http,
     ) {
     }
 
@@ -22,7 +22,7 @@ class ChargeStationManagement implements ChargeStationManagementInterface
      */
     public function ListStations(int $page = 1, int $page_size = 10): array
     {
-        $stations = $this->http->get('/stations/list', [
+        $stations = $this->http->get('/v2/stations/list', [
             'page_no' => $page,
             'page_size' => $page_size,
         ]);
@@ -44,7 +44,7 @@ class ChargeStationManagement implements ChargeStationManagementInterface
      */
     public function GetStationInfo(int $station_id): StationInfo
     {
-        $station = $this->http->get('/stations/' . $station_id);
+        $station = $this->http->get('/v2/stations/' . $station_id);
 
         return new StationInfo($station);
     }
@@ -55,7 +55,7 @@ class ChargeStationManagement implements ChargeStationManagementInterface
      */
     public function ListStationSpaces(int $station_id): array
     {
-        $spaces = $this->http->get('/stations/' . $station_id . '/spaces/list');
+        $spaces = $this->http->get('/v2/stations/' . $station_id . '/spaces/list');
 
         return [
             'page_no' => $spaces['page_no'],
@@ -75,7 +75,7 @@ class ChargeStationManagement implements ChargeStationManagementInterface
      */
     public function GetStationSpace(int $station_id, int $space_id): StationRangeSpace
     {
-        $space = $this->http->get('/stations/' . $station_id . '/spaces/' . $space_id);
+        $space = $this->http->get('/v2/stations/' . $station_id . '/spaces/' . $space_id);
 
         return new StationRangeSpace($space);
     }

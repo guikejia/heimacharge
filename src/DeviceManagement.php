@@ -10,7 +10,7 @@ use Guikejia\HeiMaCharge\DataStruct\DeviceManagement\DeviceInfo;
 class DeviceManagement implements DeviceManagementInterface
 {
     public function __construct(
-        protected HttpClientFactory $http,
+        protected HttpClient $http,
     ) {
     }
 
@@ -21,7 +21,7 @@ class DeviceManagement implements DeviceManagementInterface
      */
     public function ListDevices(?int $station_id, ?string $real_status): array
     {
-        $devices = $this->http->get('/devices/list', [
+        $devices = $this->http->get('/v2/devices/list', [
             'station_id' => $station_id,
             'real_status' => $real_status,
         ]);
@@ -38,7 +38,7 @@ class DeviceManagement implements DeviceManagementInterface
      */
     public function GetDeviceInfo(int $device_id, ?string $real_status): DeviceInfo
     {
-        $device = $this->http->get('/devices/' . $device_id, [
+        $device = $this->http->get('/v2/devices/' . $device_id, [
             'real_status' => $real_status,
         ]);
 

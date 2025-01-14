@@ -8,5 +8,8 @@ use Attribute;
 
 #[Attribute]
 class Map {
-    public function __construct(public readonly string $field) {}
+    public function __construct(
+        public readonly string $field,
+        public readonly string $type = '',
+    ) {}
 }

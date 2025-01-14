@@ -68,6 +68,6 @@ class StationInfo extends DataModel
      * 站点时段费用详情
      * @var array
      */
-    #[Map('charge_fee_details')]
+    #[Map('charge_fee_details', type: ChargeFeeDetail::class)]
     public array $charge_fee_details;
 }

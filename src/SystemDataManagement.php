@@ -22,7 +22,7 @@ class SystemDataManagement implements SystemDataManagementInterface
     public const CAR_TYPE = 2;
 
     public function __construct(
-        protected HttpClientFactory $http,
+        protected HttpClient $http,
     ) {
     }
 
@@ -35,7 +35,7 @@ class SystemDataManagement implements SystemDataManagementInterface
      */
     public function GetSysData(int $type, int $page = 1, int $page_size = 10): array
     {
-        $data = $this->http->get('/sysdata', [
+        $data = $this->http->get('/v2/sysdata', [
             'page_no' => $page,
             'page_size' => $page_size,
             'type' => $type,

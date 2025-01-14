@@ -30,7 +30,7 @@ class DeviceInfo extends DataModel
      * 设备接口信息
      * @var array
      */
-    #[Map('connector_status_infos')]
+    #[Map('connector_status_infos', type: ConnectorStatusInfo::class)]
     public array $connector_status_infos;
 
     /**
