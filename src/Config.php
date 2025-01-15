@@ -37,6 +37,11 @@ class Config
         return $this->config['heima_public_key'];
     }
 
+    public function getPublicKey(): string
+    {
+        return $this->config['public_key'];
+    }
+
     public function getPrivateKey(): string
     {
         return $this->config['private_key'];

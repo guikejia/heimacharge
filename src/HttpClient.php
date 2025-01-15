@@ -15,20 +15,12 @@ class HttpClient
 {
     public function __construct(
         protected ContainerInterface $container,
-        protected Utils              $utils,
-        protected Config             $config,
-    ) {}
-
-    protected function create(array $options = []): Client
-    {
-        return $this->container->get(ClientFactory::class)->create($options);
+        protected Utils $utils,
+        protected Config $config,
+    ) {
     }
 
     /**
-     * @param string $method
-     * @param string $uri
-     * @param array $options
-     * @return ?array
      * @throws ChargeBusinessException
      * @throws Exception
      */
@@ -37,47 +29,55 @@ class HttpClient
         $_options = [
             'debug' => true,
             'base_uri' => $this->config->getBaseUri(),
-            'headers' => ['Accept' => 'application/json'],
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
         ];
 
+        if (isset($options['Authorization'])) {
+            $_options['headers']['Authorization'] = $options['Authorization'];
+        }
+
+        $timestamp = round(microtime(true) * 1000);
+        $nonce = $this->utils->getNonce(12);
         $data = '';
         if (isset($options['body'])) {
             $json_body = json_encode($options['body']);
-            $data = $this->utils->encryptedData($json_body);
+            $data = $this->utils->encryptedData($json_body, $nonce);
         }
 
         if (isset($options['query'])) {
             $query = http_build_query($options['query']);
-            $uri = $uri.'?'.$query;
+            $uri = $uri . '?' . $query;
         }
 
-        $timestamp = time();
-        $nonce = $this->utils->getNonce();
-        $signature = $this->utils->genSignature($method, $uri, $timestamp, $nonce, $data);
+        $request_data = $this->utils->getSignatureData($method, $uri, $timestamp, $nonce, $data);
+        $signature = $this->utils->genSignature($request_data);
 
         $body = [
-            'data' => $data,
-            'timestamp' => $timestamp,
-            'nonce' => $nonce,
-            'signature' => $signature,
             'client_id' => $this->config->getClientId(),
+            'data' => $data,
+            'nonce' => $nonce,
+            'timestamp' => $timestamp,
+            'signature' => $signature,
         ];
         $_options['body'] = json_encode($body);
+        var_dump($_options['body']);
 
         try {
             $response = $this->create()->request($method, $uri, $_options);
-            $contents = $response->getBody()->getContents();
 
             $status = $response->getStatusCode();
-
-            if ($status == 200) {
-                return $contents ? json_decode($contents, true) : [];
-            }
+            $contents = $response->getBody()->getContents();
 
             return $contents ? json_decode($contents, true) : [];
         } catch (GuzzleException $e) {
             var_dump($e->getMessage());
-            return [];
+            $message = explode("\n", $e->getMessage());
+            $error = json_decode($message[1], true);
+            $error['error'] = $message[0];
+
+            return $error;
         }
     }
 
@@ -105,5 +105,10 @@ class HttpClient
     public function delete($uri): mixed
     {
         return $this->request(method: 'DELETE', uri: $uri);
+    }
+
+    protected function create(array $options = []): Client
+    {
+        return $this->container->get(ClientFactory::class)->create($options);
     }
 }

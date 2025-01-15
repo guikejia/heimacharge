@@ -13,33 +13,44 @@ class Utils
         protected Config $config
     ) {}
 
-    public function encryptedData($data): string
+    public function encryptedData($data, $iv): string
     {
-        $tag = '';
-        $encrypted = $this->AesGcmEncrypt($data, $tag);
-        return base64_encode($encrypted);
+        $cipher = 'AES-256-GCM';
+        $ciphertext = openssl_encrypt(
+            $data,
+            $cipher,
+            $this->config->getClientSecret(),
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($ciphertext === false) {
+            throw new Exception('Encryption failed: ' . openssl_error_string());
+        }
+
+        return base64_encode($ciphertext . $tag);
     }
 
     public function getNonce($length = 16): string
     {
         $str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
-        $randStr = str_shuffle($str);//打乱字符串
-        $rands= substr($randStr,0,$length);//substr(string,start,length);返回字符串的一部分
-        return $rands;
+        $randStr = str_shuffle($str);
+        return substr($randStr, 0, $length);
+    }
+
+    public function getSignatureData($method, $requestPath, $timestamp, $nonce, $encryptedRequestData): string
+    {
+        return implode('', [$method, $requestPath, $timestamp, $nonce, $encryptedRequestData]);
     }
 
     /**
      * @throws Exception
      */
-    public function genSignature($method, $requestPath, $timestamp, $nonce, $encryptedRequestData): string
+    public function genSignature($data): string
     {
-        // Step 1: Concatenate the input data
-        $data = implode('', [$method, $requestPath, $timestamp, $nonce, $encryptedRequestData]);
+        $hash = md5($data);
 
-        // Step 2: Compute SHA-256 hash of the concatenated string
-        $hash = hash('sha256', $data, true); // Generate raw binary hash
-
-        // Step 3: Sign the hash using the RSA private key
         $privateKey = $this->config->getPrivateKey();
         $privateKeyResource = openssl_pkey_get_private($privateKey);
         if (!$privateKeyResource) {
@@ -47,14 +58,20 @@ class Utils
         }
 
         $signature = '';
-        $success = openssl_sign($hash, $signature, $privateKeyResource, OPENSSL_ALGO_SHA256);
+        $success = openssl_sign(hex2bin($hash), $signature, $privateKeyResource, OPENSSL_ALGO_SHA256);
 
         if (!$success) {
             throw new Exception("Failed to generate the digital signature.");
         }
 
-        // Step 4: Encode the signature in Base64
         return base64_encode($signature);
+    }
+
+    public function verifySignature($signContent = null, $signatureStr = '')
+    {
+        $public_key = $this->config->getPublicKey();
+        $key = openssl_get_publickey($public_key);
+        return openssl_verify($signContent, base64_decode($signatureStr), $key, OPENSSL_ALGO_SHA256);
     }
 
     /**
@@ -68,24 +85,25 @@ class Utils
      * @throws RandomException
      * @throws Exception
      */
-    function AesGcmEncrypt(string $plaintext, string &$tag, string $aad = ''): string
+    function AesGcmEncrypt(string $plaintext, string $iv, string &$tag): string
     {
-        $iv = random_bytes(12); // GCM recommended IV length is 12 bytes
+        $cipher = 'AES-256-GCM';
+        $ivLen = openssl_cipher_iv_length($cipher);
+//        $iv = random_bytes(12); // GCM recommended IV length is 12 bytes
         $ciphertext = openssl_encrypt(
             $plaintext,
-            'aes-256-gcm',
-            $this->config->getPrivateKey(),
+            $cipher,
+            $this->config->getHeiMaPublicKey(),
             OPENSSL_RAW_DATA,
             $iv,
-            $tag,
-            $aad
+            $tag
         );
 
         if ($ciphertext === false) {
             throw new Exception('Encryption failed: ' . openssl_error_string());
         }
 
-        return $iv . $ciphertext; // Prepend IV to the ciphertext
+        return $ciphertext; // Prepend IV to the ciphertext
     }
 
     /**
@@ -98,7 +116,7 @@ class Utils
      * @return string            Decrypted plaintext
      * @throws Exception
      */
-    function AesGcmDecrypt(string $ciphertext, string $tag, string $aad = ''): string
+    function AesGcmDecrypt(string $ciphertext): string
     {
         $iv = substr($ciphertext, 0, 12); // Extract the IV
         $ciphertext_raw = substr($ciphertext, 12);
@@ -106,11 +124,9 @@ class Utils
         $plaintext = openssl_decrypt(
             $ciphertext_raw,
             'aes-256-gcm',
-            $this->config->getHeiMaPublicKey(),
+            $this->config->getPrivateKey(),
             OPENSSL_RAW_DATA,
             $iv,
-            $tag,
-            $aad
         );
 
         if ($plaintext === false) {
