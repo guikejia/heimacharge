@@ -14,8 +14,7 @@ class OrderManagement implements OrderManagementInterface
 {
     public function __construct(
         protected HttpClient $http,
-    ) {
-    }
+    ) {}
 
     /**
      * @param string $merchant_order_no
@@ -43,19 +42,11 @@ class OrderManagement implements OrderManagementInterface
         ];
     }
 
-    /**
-     * @param string $merchant_order_no
-     * @return mixed
-     */
     public function FinishOrder(string $merchant_order_no): mixed
     {
         return $this->http->delete('/v2/orders/' . $merchant_order_no);
     }
 
-    /**
-     * @param string $merchant_order_no
-     * @return OrderInfo
-     */
     public function GetOrderInfo(string $merchant_order_no): OrderInfo
     {
         $order = $this->http->get('/v2/orders/' . $merchant_order_no);
@@ -63,13 +54,6 @@ class OrderManagement implements OrderManagementInterface
         return new OrderInfo($order);
     }
 
-    /**
-     * @param string $start_date
-     * @param string $end_date
-     * @param int $page_no
-     * @param int $page_size
-     * @return array
-     */
     public function ListOrders(string $start_date, string $end_date, int $page_no = 1, int $page_size = 10): array
     {
         $orders = $this->http->get('/v2/orders/list', [
@@ -84,15 +68,10 @@ class OrderManagement implements OrderManagementInterface
             'page_size' => $orders['page_size'],
             'total_count' => $orders['total_count'],
             'total_page' => $orders['total_page'],
-            'results' => array_map(fn($item) => new OrderInfo($item), $orders['results']),
+            'results' => array_map(fn ($item) => new OrderInfo($item), $orders['results']),
         ];
     }
 
-    /**
-     * @param string|null $start_date
-     * @param string|null $end_date
-     * @return mixed
-     */
     public function OrderStatistics(?string $start_date, ?string $end_date): mixed
     {
         return $this->http->get('/v2/orders/statistics', [

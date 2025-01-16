@@ -62,7 +62,6 @@ class Utils
 
     public function getSignatureData($method, $requestPath, $timestamp, $nonce, $encryptedRequestData): string
     {
-        echo '---'.implode('', [$method, $requestPath, $timestamp, $nonce, $encryptedRequestData]);
         return implode('', [$method, $requestPath, $timestamp, $nonce, $encryptedRequestData]);
     }
 
@@ -162,11 +161,5 @@ class Utils
         $public_key = $this->config->getHeiMaPublicKey();
         $key = openssl_get_publickey($public_key);
         return (bool) openssl_verify($hex2bin_md5, base64_decode($sign), $key, OPENSSL_ALGO_SHA256);
-    }
-
-
-    public function getToken()
-    {
-
     }
 }
