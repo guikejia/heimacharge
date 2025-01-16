@@ -32,6 +32,27 @@ class Utils
         return base64_encode($ciphertext . $tag);
     }
 
+    public function decryptedData(string $encryptedData, string $iv): string
+    {
+        $publicKey = $this->config->getClientSecret();
+        $tagLength = 16;  // AES-256-GCM 的 tag 长度通常为 16 字节
+
+        // 先将 Base64 解码
+        $encryptedData = base64_decode($encryptedData);
+
+        // 分离加密数据和 tag
+        $encryptedDataWithoutTag = substr($encryptedData, 0, -$tagLength);
+        $tag = substr($encryptedData, -$tagLength);
+
+        $decrypted = openssl_decrypt($encryptedDataWithoutTag, 'aes-256-gcm', $publicKey, OPENSSL_RAW_DATA, $iv, $tag);
+
+        if ($decrypted === false) {
+            throw new Exception('Decryption failed');
+        }
+
+        return $decrypted;
+    }
+
     public function getNonce($length = 16): string
     {
         $str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
@@ -41,10 +62,12 @@ class Utils
 
     public function getSignatureData($method, $requestPath, $timestamp, $nonce, $encryptedRequestData): string
     {
+        echo '---'.implode('', [$method, $requestPath, $timestamp, $nonce, $encryptedRequestData]);
         return implode('', [$method, $requestPath, $timestamp, $nonce, $encryptedRequestData]);
     }
 
     /**
+     * @param mixed $data
      * @throws Exception
      */
     public function genSignature($data): string
@@ -53,15 +76,15 @@ class Utils
 
         $privateKey = $this->config->getPrivateKey();
         $privateKeyResource = openssl_pkey_get_private($privateKey);
-        if (!$privateKeyResource) {
-            throw new Exception("Invalid private key.");
+        if (! $privateKeyResource) {
+            throw new Exception('Invalid private key.');
         }
 
         $signature = '';
         $success = openssl_sign(hex2bin($hash), $signature, $privateKeyResource, OPENSSL_ALGO_SHA256);
 
-        if (!$success) {
-            throw new Exception("Failed to generate the digital signature.");
+        if (! $success) {
+            throw new Exception('Failed to generate the digital signature.');
         }
 
         return base64_encode($signature);
@@ -75,21 +98,19 @@ class Utils
     }
 
     /**
-     * AES-GCM encryption and decryption
+     * AES-GCM encryption and decryption.
      *
-     * @param string $key Encryption key (16/24/32 bytes for AES-128/192/256)
      * @param string $plaintext Plaintext to encrypt
-     * @param string $aad Additional authenticated data
      * @param string &$tag Reference to hold the authentication tag
-     * @return string            Encrypted ciphertext
+     * @return string Encrypted ciphertext
      * @throws RandomException
      * @throws Exception
      */
-    function AesGcmEncrypt(string $plaintext, string $iv, string &$tag): string
+    public function AesGcmEncrypt(string $plaintext, string $iv, string &$tag): string
     {
         $cipher = 'AES-256-GCM';
         $ivLen = openssl_cipher_iv_length($cipher);
-//        $iv = random_bytes(12); // GCM recommended IV length is 12 bytes
+        //        $iv = random_bytes(12); // GCM recommended IV length is 12 bytes
         $ciphertext = openssl_encrypt(
             $plaintext,
             $cipher,
@@ -107,16 +128,13 @@ class Utils
     }
 
     /**
-     * AES-GCM decryption
+     * AES-GCM decryption.
      *
-     * @param string $key Encryption key (16/24/32 bytes for AES-128/192/256)
      * @param string $ciphertext Ciphertext to decrypt
-     * @param string $aad Additional authenticated data
-     * @param string $tag Authentication tag
-     * @return string            Decrypted plaintext
+     * @return string Decrypted plaintext
      * @throws Exception
      */
-    function AesGcmDecrypt(string $ciphertext): string
+    public function AesGcmDecrypt(string $ciphertext): string
     {
         $iv = substr($ciphertext, 0, 12); // Extract the IV
         $ciphertext_raw = substr($ciphertext, 12);
@@ -134,5 +152,21 @@ class Utils
         }
 
         return $plaintext;
+    }
+
+    public function verifySignatureWithBH(string $sign, string $data, string $requestPath, int $timestamp, string $nonce, string $method): bool
+    {
+        $before_md5 = sprintf('%s%s%s%s%s', $method, $requestPath, $timestamp, $nonce, $data);
+        $after_md5 = md5($before_md5);
+        $hex2bin_md5 = hex2bin($after_md5);
+        $public_key = $this->config->getHeiMaPublicKey();
+        $key = openssl_get_publickey($public_key);
+        return (bool) openssl_verify($hex2bin_md5, base64_decode($sign), $key, OPENSSL_ALGO_SHA256);
+    }
+
+
+    public function getToken()
+    {
+
     }
 }
