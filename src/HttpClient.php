@@ -30,7 +30,7 @@ class HttpClient
     public function request(string $method, string $uri, array $options = [], int $try_count = self::TRY_COUNT): array
     {
         if ($try_count <= 0) {
-            throw new ChargeBusinessException(sprintf('请求共%s尝试,最终失败', self::TRY_COUNT));
+            throw new ChargeBusinessException(sprintf('%s请求共%s尝试,最终失败', $uri, self::TRY_COUNT));
         }
         --$try_count;
         $ori_url = $uri;
@@ -102,16 +102,36 @@ class HttpClient
         try {
             $real_request_data = ['method' => $method, 'uri' => $uri, 'options' => $_options];
             $response = $this->create()->request($method, $uri, $_options);
-            $status = $response->getStatusCode();
+            $http_status_code = $response->getStatusCode();
 
-            if ($status != 200) {
+            if ($http_status_code != 200) {
                 throw new Exception('请求失败');
             }
 
             // 接口原始还回值
             $real_response_data = $response->getBody()->getContents();
+            if (empty($real_response_data)) {
+                throw new ChargeBusinessException('黑马原力侧接口返回值有为空!');
+            }
             // 接口原始返回值 json
             $ori_contents = json_decode($real_response_data, true);
+            if (! is_array($ori_contents)) {
+                throw new ChargeBusinessException('黑马原力侧接口返回值有误');
+            }
+            // 黑马原力侧接口返回解为数组需要有 data,nonce,signature,timestamp
+            if (! isset($ori_contents['data'])) {
+                throw new ChargeBusinessException('黑马原力侧接口返回值有误[data]');
+            }
+            if (! isset($ori_contents['nonce'])) {
+                throw new ChargeBusinessException('黑马原力侧接口返回值有误[nonce]');
+            }
+            if (! isset($ori_contents['signature'])) {
+                throw new ChargeBusinessException('黑马原力侧接口返回值有误[signature]');
+            }
+            if (! isset($ori_contents['timestamp'])) {
+                throw new ChargeBusinessException('黑马原力侧接口返回值有误[timestamp]');
+            }
+
             // 接口原始返回值 data 解密
             $contents = $this->utils->decryptedData($ori_contents['data'], $ori_contents['nonce']);
             // 业务返回值
@@ -120,7 +140,7 @@ class HttpClient
             // 校验黑马侧签名
             $re = $this->utils->verifySignatureWithBH($ori_contents['signature'], $ori_contents['data'], $uri, $ori_contents['timestamp'], $ori_contents['nonce'], $method);
             if (! $re) {
-                throw new Exception('验签失败');
+                throw new ChargeBusinessException('验签失败');
             }
             return $response_data;
         } catch (\Throwable $e) {
@@ -129,10 +149,12 @@ class HttpClient
             $exec_result = 'FAIL';
             $exec_msg = $e->getMessage();
             $response_data = ['error_code' => $error_code, 'error_msg' => $error_msg];
-            $real_response_data = $error_msg;
+            $real_response_data = $real_response_data ?? $error_msg;
+            $http_status_code = $http_status_code ?? 0;
             if ($e instanceof ClientException) {
                 $response = $e->getResponse();
-                if ($response->getStatusCode() != 200) {
+                $http_status_code = $response->getStatusCode();
+                if ($http_status_code != 200) {
                     $body = $response->getBody();
                     $error_content = $body->getContents();
                     $error_content_arr = (array) json_decode($error_content);
@@ -159,6 +181,7 @@ class HttpClient
                 'real_response_data' => $real_response_data,
                 'exec_result' => $exec_result,
                 'exec_msg' => $exec_msg,
+                'http_status_code' => $http_status_code,
                 'exec_count' => self::TRY_COUNT - $try_count,
             ]);
             // token失效需要重新登录
