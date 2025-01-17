@@ -7,13 +7,16 @@ namespace Guikejia\HeiMaCharge;
 use Guikejia\HeiMaCharge\Exceptions\ChargeBusinessException;
 use Guikejia\HeiMaCharge\Exceptions\Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ClientException;
 use Hyperf\Guzzle\ClientFactory;
 use Psr\Container\ContainerInterface;
 
 class HttpClient
 {
+    public const LOGIN_URI = '/v2/authorization/login';
+
+    public const TRY_COUNT = 3;
+
     public function __construct(
         protected ContainerInterface $container,
         protected Utils $utils,
@@ -24,8 +27,14 @@ class HttpClient
      * @throws ChargeBusinessException
      * @throws Exception
      */
-    public function request(string $method, string $uri, array $options = [], int $try_count = 0): array
+    public function request(string $method, string $uri, array $options = [], int $try_count = self::TRY_COUNT): array
     {
+        if ($try_count <= 0) {
+            throw new ChargeBusinessException(sprintf('请求共%s尝试,最终失败', self::TRY_COUNT));
+        }
+        --$try_count;
+        $ori_url = $uri;
+        $ori_options = $options;
         $_options = [
             'debug' => true,
             'base_uri' => $this->config->getBaseUri(),
@@ -34,7 +43,7 @@ class HttpClient
             ],
         ];
 
-        if ($uri != '/v2/authorization/login') {
+        if ($uri != self::LOGIN_URI) {
             if (! isset($options['Authorization'])) {
                 $options['Authorization'] = $this->getAuthorToken();
             }
@@ -47,6 +56,7 @@ class HttpClient
         $nonce = $this->utils->getNonce(12);
         $exec_result = 'SUCCESS';
         $exec_msg = '';
+        $is_need_re_login = false;
 
         $request_data = ['method' => $method, 'uri' => $uri, 'options' => $options];
 
@@ -109,28 +119,52 @@ class HttpClient
             if (! $re) {
                 throw new Exception('验签失败');
             }
-
-            var_dump('结果:', $response_data);
             return $response_data;
-        } catch (Exception|GuzzleException|RequestException $e) {
-            $response_data = [];
-            $real_response_data = $e->getMessage();
+        } catch (\Throwable $e) {
+            $error_code = 0;
+            $error_msg = $e->getMessage();
             $exec_result = 'FAIL';
             $exec_msg = $e->getMessage();
-            if ($e instanceof RequestException) {
-                // 如果登录失效，重新获取token
-
-                // var_dump('状态码:', $e->getCode());
-            } elseif ($e instanceof GuzzleException) {
-                $response_data = $e->getMessage();
+            $response_data = ['error_code' => $error_code, 'error_msg' => $error_msg];
+            $real_response_data = $error_msg;
+            if ($e instanceof ClientException) {
+                $response = $e->getResponse();
+                if ($response->getStatusCode() != 200) {
+                    $body = $response->getBody();
+                    $error_content = $body->getContents();
+                    $error_content_arr = (array) json_decode($error_content);
+                    if (isset($error_content_arr['code'])) {
+                        $error_code = $error_content_arr['code'];
+                        $error_msg = $error_content_arr['message'] ?? $e->getMessage();
+                    }
+                    // 若为非登录接口返回的错误状态码是 40001、40002、400023 则重新获取token
+                    if ($uri != self::LOGIN_URI && in_array($error_code, [40001, 40002, 40003])) {
+                        $is_need_re_login = true;
+                    }
+                    throw new ChargeBusinessException($error_msg, $error_code);
+                }
             }
-
-            $message = explode("\n", $e->getMessage());
-            $error = json_decode($message[1], true);
-            $error['error'] = $message[0];
-            throw new ChargeBusinessException($error['error'] . 'aaaa');
+            throw new ChargeBusinessException($error_msg, $error_code);
         } finally {
-            $this->hook(['uri' => $uri, 'method' => $method, 'request_data' => $request_data, 'real_request_data' => $real_request_data, 'response_data' => $response_data, 'real_response_data' => $real_response_data, 'exec_result' => $exec_result, 'exec_msg' => $exec_msg]);
+            $this->hook([
+                'uri' => $uri,
+                'method' => $method,
+                'request_data' => $request_data,
+                'real_request_data' => $real_request_data,
+                'response_data' => $response_data,
+                'real_response_data' => $real_response_data,
+                'exec_result' => $exec_result,
+                'exec_msg' => $exec_msg,
+                'exec_count' => self::TRY_COUNT - $try_count,
+            ]);
+            // token失效需要重新登录
+            if ($is_need_re_login) {
+                $this->getAuthorToken(true);
+            }
+            // 请求错误后重试
+            if ($exec_result != 'SUCCESS') {
+                return $this->request($method, $ori_url, $ori_options, $try_count);
+            }
         }
     }
 
@@ -160,12 +194,15 @@ class HttpClient
         return $this->request(method: 'DELETE', uri: $uri);
     }
 
-    public function getAuthorToken(): string
+    public function getAuthorToken($force_refresh = false): string
     {
         $author_key = 'black_horse_access_token';
-        $access_token = redis()->get($author_key);
-        if ($access_token) {
-            //return $access_token;
+
+        if (! $force_refresh) {
+            $access_token = redis()->get($author_key);
+            if ($access_token) {
+                return $access_token;
+            }
         }
 
         // 请求黑马原力接口获取token
