@@ -14,7 +14,12 @@ class Config
     public function __construct(
         protected ContainerInterface $container,
     ) {
-        $this->config = $this->container->get(ConfigInterface::class)->get('HeiMaCharge');
+        $this->config = $this->container->get(ConfigInterface::class)->get('black_horse_charge');
+    }
+
+    public function getHttpConfig(): array
+    {
+        return (array) ($this->config['http'] ?? []);
     }
 
     public function getBaseUri()

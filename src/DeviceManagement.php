@@ -11,14 +11,8 @@ class DeviceManagement implements DeviceManagementInterface
 {
     public function __construct(
         protected HttpClient $http,
-    ) {
-    }
+    ) {}
 
-    /**
-     * @param int|null $station_id
-     * @param string|null $real_status
-     * @return array
-     */
     public function ListDevices(?int $station_id, ?string $real_status): array
     {
         $devices = $this->http->get('/v2/devices/list', [
@@ -31,11 +25,6 @@ class DeviceManagement implements DeviceManagementInterface
         }, $devices);
     }
 
-    /**
-     * @param int $device_id
-     * @param string|null $real_status
-     * @return DeviceInfo
-     */
     public function GetDeviceInfo(int $device_id, ?string $real_status): DeviceInfo
     {
         $device = $this->http->get('/v2/devices/' . $device_id, [

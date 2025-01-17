@@ -35,9 +35,12 @@ class HttpClient
         --$try_count;
         $ori_url = $uri;
         $ori_options = $options;
+        $http_config = $this->config->getHttpConfig();
         $_options = [
-            'debug' => true,
+            'debug' => $http_config['debug'],
             'base_uri' => $this->config->getBaseUri(),
+            'connect_timeout' => $http_config['connect_timeout'],
+            'timeout' => $http_config['timeout'],
             'headers' => [
                 'Accept' => 'application/json',
             ],
@@ -45,7 +48,7 @@ class HttpClient
 
         if ($uri != self::LOGIN_URI) {
             if (! isset($options['Authorization'])) {
-                $options['Authorization'] = $this->getAuthorToken();
+                $options['Authorization'] = $this->getAutoAuthorToken();
             }
             if (isset($options['Authorization'])) {
                 $_options['headers']['Authorization'] = 'Bearer ' . $options['Authorization'];
@@ -136,6 +139,7 @@ class HttpClient
                     if (isset($error_content_arr['code'])) {
                         $error_code = $error_content_arr['code'];
                         $error_msg = $error_content_arr['message'] ?? $e->getMessage();
+                        $response_data = ['error_code' => $error_code, 'error_msg' => $error_msg];
                     }
                     // 若为非登录接口返回的错误状态码是 40001、40002、400023 则重新获取token
                     if ($uri != self::LOGIN_URI && in_array($error_code, [40001, 40002, 40003])) {
@@ -159,7 +163,7 @@ class HttpClient
             ]);
             // token失效需要重新登录
             if ($is_need_re_login) {
-                $this->getAuthorToken(true);
+                $this->getAutoAuthorToken(true);
             }
             // 请求错误后重试
             if ($exec_result != 'SUCCESS') {
@@ -194,21 +198,31 @@ class HttpClient
         return $this->request(method: 'DELETE', uri: $uri);
     }
 
-    public function getAuthorToken($force_refresh = false): string
+    /**
+     * 请求业务接口,主动获取黑马原图接口的凭证信息.
+     * 注 业务方 可以提供 getTokenGetWithBlackHorse(string $key) 与 setTokenGetWithBlackHorse(string $key, string $value, int $expired_in) 两个方法来设置凭证缓存.
+     * @param bool $force_refresh 是否强制刷新缓存凭证
+     * @return string 返回凭证信息
+     * @throws ChargeBusinessException
+     * @throws Exception
+     */
+    public function getAutoAuthorToken(bool $force_refresh = false): string
     {
         $author_key = 'black_horse_access_token';
 
         if (! $force_refresh) {
-            $access_token = redis()->get($author_key);
-            if ($access_token) {
-                return $access_token;
+            if (function_exists('getTokenGetWithBlackHorse')) {
+                $access_token = getTokenGetWithBlackHorse($author_key);
+                if ($access_token) {
+                    return $access_token;
+                }
             }
         }
 
         // 请求黑马原力接口获取token
         $re = $this->request(
             'POST',
-            '/v2/authorization/login',
+            self::LOGIN_URI,
             [
                 'body' => [
                     'client_id' => $this->config->getClientId(),
@@ -219,13 +233,15 @@ class HttpClient
         $access_token = $re['access_token'] ?? '';
         $expired_in = (int) ($re['expired_in'] ?? '');
         if ($access_token && $expired_in) {
-            redis()->set($author_key, $access_token, ['expires_in' => $expired_in - 60]);
+            function_exists('setTokenGetWithBlackHorse') && setTokenGetWithBlackHorse($author_key, $access_token, $expired_in);
             return $access_token;
         }
         throw new ChargeBusinessException('获取黑马原力则获取token失败');
     }
 
-    // 业务方可以通过切片的方式，在请求前后做一些操作(比如记录日志)
+    /**
+     * 业务方可以通过切片的方式，在请求前后做一些操作(比如记录日志).
+     */
     public function hook(array $params): void {}
 
     protected function create(array $options = []): Client
