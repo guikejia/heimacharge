@@ -56,7 +56,7 @@ class HttpClient
             $data = $this->utils->encryptedData($json_body, $nonce);
         }
 
-        if (isset($options['query'])) {
+        if (isset($options['query']) && $options['query']) {
             $query = http_build_query($options['query']);
             $uri = $uri . '?' . $query;
         }
@@ -80,15 +80,14 @@ class HttpClient
             $_options['headers']['x-timestamp'] = $timestamp;
             $_options['headers']['x-client-id'] = $this->config->getClientId();
 
+            // header头拼接业务参数
             foreach ($options['query'] as $k => $v) {
                 $_options['headers'][$k] = $v;
             }
-
-            // $_options['headers']['data'] = $data;
         }
 
         try {
-            $real_request_data = ['method' => $method, 'uri' => $uri, 'options' => $options];
+            $real_request_data = ['method' => $method, 'uri' => $uri, 'options' => $_options];
             $response = $this->create()->request($method, $uri, $_options);
             $status = $response->getStatusCode();
 
@@ -110,6 +109,8 @@ class HttpClient
             if (! $re) {
                 throw new Exception('验签失败');
             }
+
+            var_dump('结果:', $response_data);
             return $response_data;
         } catch (Exception|GuzzleException|RequestException $e) {
             $response_data = [];
@@ -117,7 +118,9 @@ class HttpClient
             $exec_result = 'FAIL';
             $exec_msg = $e->getMessage();
             if ($e instanceof RequestException) {
-                var_dump('状态码:', $e->getCode());
+                // 如果登录失效，重新获取token
+
+                // var_dump('状态码:', $e->getCode());
             } elseif ($e instanceof GuzzleException) {
                 $response_data = $e->getMessage();
             }
@@ -125,9 +128,9 @@ class HttpClient
             $message = explode("\n", $e->getMessage());
             $error = json_decode($message[1], true);
             $error['error'] = $message[0];
-            return $error;
+            throw new ChargeBusinessException($error['error'] . 'aaaa');
         } finally {
-            $this->hook(['uri' => $uri, 'request_data' => $request_data, 'real_request_data' => $real_request_data, $response_data, $real_response_data, $exec_result, $exec_msg]);
+            $this->hook(['uri' => $uri, 'method' => $method, 'request_data' => $request_data, 'real_request_data' => $real_request_data, 'response_data' => $response_data, 'real_response_data' => $real_response_data, 'exec_result' => $exec_result, 'exec_msg' => $exec_msg]);
         }
     }
 
@@ -162,7 +165,7 @@ class HttpClient
         $author_key = 'black_horse_access_token';
         $access_token = redis()->get($author_key);
         if ($access_token) {
-            return $access_token;
+            //return $access_token;
         }
 
         // 请求黑马原力接口获取token
@@ -182,7 +185,7 @@ class HttpClient
             redis()->set($author_key, $access_token, ['expires_in' => $expired_in - 60]);
             return $access_token;
         }
-        throw new \Exception('获取黑马原力则获取token失败');
+        throw new ChargeBusinessException('获取黑马原力则获取token失败');
     }
 
     // 业务方可以通过切片的方式，在请求前后做一些操作(比如记录日志)

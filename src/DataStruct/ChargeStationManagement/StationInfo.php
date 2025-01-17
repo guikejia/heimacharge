@@ -13,43 +13,37 @@ use Guikejia\HeiMaCharge\DataStruct\DataModel;
 class StationInfo extends DataModel
 {
     /**
-     * 站点 id
-     * @var int
+     * 站点 id.
      */
     #[Map('id')]
-    public readonly int $id;
+    public ?int $id;
 
     /**
-     * 站点名称
-     * @var string
+     * 站点名称.
      */
     #[Map('name')]
     public string $name;
 
     /**
      * 站点地址
-     * @var string
      */
     #[Map('address')]
     public string $address;
 
     /**
-     * 站点联系电话
-     * @var string|null
+     * 站点联系电话.
      */
     #[Map('service_tel')]
     public ?string $service_tel;
 
     /**
-     * 站点纬度（WGS84标准）
-     * @var string
+     * 站点纬度（WGS84标准）.
      */
     #[Map('latitude')]
     public string $latitude;
 
     /**
-     * 站点经度（WGS84标准）
-     * @var string
+     * 站点经度（WGS84标准）.
      */
     #[Map('longitude')]
     public string $longitude;
@@ -58,15 +52,13 @@ class StationInfo extends DataModel
      * 1 等待运营
      * 2 运营中
      * 3 暂停运营
-     * 4 已关闭
-     * @var int
+     * 4 已关闭.
      */
     #[Map('status')]
     public int $status;
 
     /**
-     * 站点时段费用详情
-     * @var array
+     * 站点时段费用详情.
      */
     #[Map('charge_fee_details', type: ChargeFeeDetail::class)]
     public array $charge_fee_details;

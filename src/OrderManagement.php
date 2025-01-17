@@ -16,13 +16,7 @@ class OrderManagement implements OrderManagementInterface
         protected HttpClient $http,
     ) {}
 
-    /**
-     * @param string $merchant_order_no
-     * @param OrderUser $user
-     * @param ChargeStation|null $station
-     * @return array
-     */
-    public function CreateNewOrder(string $merchant_order_no, OrderUser $user, ?ChargeStation $station): array
+    public function CreateNewOrder(string $merchant_order_no, OrderUser $user, ?ChargeStation $station = null): array
     {
         $orders = $this->http->post('/v2/orders/create', [
             'merchant_order_no' => $merchant_order_no,
@@ -38,7 +32,7 @@ class OrderManagement implements OrderManagementInterface
 
         return [
             'order_no' => $orders['order_no'],
-            'queue_info' => new OrderQueueInfo($orders['queue_info']),
+            'queue_info' => new OrderQueueInfo($orders['queue_info'] ?? []),
         ];
     }
 
