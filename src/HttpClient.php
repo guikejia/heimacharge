@@ -31,10 +31,11 @@ class HttpClient
      * @throws ChargeBusinessException
      * @throws Exception
      */
-    public function request(string $method, string $uri, array $options = [], int $try_count = self::TRY_COUNT): array
+    public function request(string $method, string $uri, array $options = [], int $try_count = self::TRY_COUNT, string $last_msg = ''): array
     {
         if ($try_count <= 0) {
-            throw new ChargeBusinessException(sprintf('%s请求共%s尝试,最终失败', $uri, self::TRY_COUNT));
+            $last_msg = $last_msg ?: sprintf('%s请求共%s尝试,最终失败', $uri, self::TRY_COUNT);
+            throw new ChargeBusinessException($last_msg);
         }
         --$try_count;
         $ori_url = $uri;
@@ -195,7 +196,7 @@ class HttpClient
             }
             // 请求错误后重试
             if ($exec_result != 'SUCCESS') {
-                return $this->request($method, $ori_url, $ori_options, $try_count);
+                return $this->request($method, $ori_url, $ori_options, $try_count, $error_msg ?? $exec_msg);
             }
         }
     }
@@ -290,7 +291,7 @@ class HttpClient
         $decryption_data = json_decode($contents, true);
 
         // 校验黑马侧签名
-        $re = $this->utils->verifySignatureWithBH($signature, $data, (string)$event_type, $timestamp, $nonce, 'POST');
+        $re = $this->utils->verifySignatureWithBH($signature, $data, (string) $event_type, $timestamp, $nonce, 'POST');
 
         $this->hook([
             'uri' => sprintf('webhook/%s', $event_type),
