@@ -15,7 +15,11 @@ class HttpClient
 {
     public const LOGIN_URI = '/v2/authorization/login';
 
+    // 接口请求失败重试次数
     public const TRY_COUNT = 3;
+
+    // 若为非登录接口返回的错误状态码是 40001、40002、400023 则重新获取token
+    public const ERROR_CODES_NEED_RE_LOGIN = [40001, 40002, 40003];
 
     public function __construct(
         protected ContainerInterface $container,
@@ -70,6 +74,7 @@ class HttpClient
         }
 
         if (isset($options['query']) && $options['query']) {
+            ksort($options['query']);
             $query = http_build_query($options['query']);
             $uri = $uri . '?' . $query;
         }
@@ -164,7 +169,7 @@ class HttpClient
                         $response_data = ['error_code' => $error_code, 'error_msg' => $error_msg];
                     }
                     // 若为非登录接口返回的错误状态码是 40001、40002、400023 则重新获取token
-                    if ($uri != self::LOGIN_URI && in_array($error_code, [40001, 40002, 40003])) {
+                    if ($uri != self::LOGIN_URI && in_array($error_code, self::ERROR_CODES_NEED_RE_LOGIN)) {
                         $is_need_re_login = true;
                     }
                     throw new ChargeBusinessException($error_msg, $error_code);
@@ -259,13 +264,52 @@ class HttpClient
             function_exists('setTokenGetWithBlackHorse') && setTokenGetWithBlackHorse($author_key, $access_token, $expired_in);
             return $access_token;
         }
-        throw new ChargeBusinessException('获取黑马原力则获取token失败');
+        throw new ChargeBusinessException('获取黑马原力侧token失败');
     }
 
     /**
      * 业务方可以通过切片的方式，在请求前后做一些操作(比如记录日志).
      */
     public function hook(array $params): void {}
+
+    public function getWebHookData(array $params): array
+    {
+        // 订单事件
+        $event_type = $params['event_type'];
+        // 经过Base64编码的加密数据域
+        $data = $params['data'];
+        // 随机12位字符，用于加密数据
+        $nonce = $params['nonce'];
+        // 请求发送的时间戳，单位：毫秒
+        $timestamp = $params['timestamp'];
+        // 通过数字签名计算出的签名值经过 base64 编码后的字符串
+        $signature = $params['signature'];
+
+        $contents = $this->utils->decryptedData($data, $nonce);
+        // 业务返回值
+        $decryption_data = json_decode($contents, true);
+
+        // 校验黑马侧签名
+        $re = $this->utils->verifySignatureWithBH($signature, $data, $event_type, $timestamp, $nonce, 'POST');
+
+        $this->hook([
+            'uri' => sprintf('webhook/%s', $event_type),
+            'method' => 'POST',
+            'request_data' => $decryption_data,
+            'real_request_data' => $params,
+            'response_data' => [],
+            'real_response_data' => [],
+            'exec_result' => $re ? 'SUCCESS' : '验签失败',
+            'exec_msg' => $re ? 'SUCCESS' : 'FAIL',
+            'http_status_code' => 200,
+            'exec_count' => 1,
+        ]);
+        if (! $re) {
+            throw new ChargeBusinessException('验签失败');
+        }
+
+        return $decryption_data;
+    }
 
     protected function create(array $options = []): Client
     {

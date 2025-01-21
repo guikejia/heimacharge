@@ -44,7 +44,6 @@ class OrderManagement implements OrderManagementInterface
     public function GetOrderInfo(string $merchant_order_no): OrderInfo
     {
         $order = $this->http->get('/v2/orders/' . $merchant_order_no);
-
         return new OrderInfo($order);
     }
 
@@ -62,7 +61,7 @@ class OrderManagement implements OrderManagementInterface
             'page_size' => $orders['page_size'],
             'total_count' => $orders['total_count'],
             'total_page' => $orders['total_page'],
-            'results' => array_map(fn ($item) => new OrderInfo($item), $orders['results']),
+            'results' => array_map(fn ($item) => new OrderInfo($item), $orders['results'] ?? []),
         ];
     }
 

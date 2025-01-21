@@ -19,18 +19,29 @@ class DataModel
             $mapName = $attributes[0]->newInstance()->field;
             $mapType = $attributes[0]->newInstance()->type;
             $type = $property->getType();
+            $params = $data[$mapName] ?? null;
+
+            // 内置类型
             if ($type && ! $type->isBuiltin()) {
-                // 如果字段是类，递归实例化
                 $nestedClass = $type->getName();
-                $property->setValue($this, new $nestedClass($data[$mapName] ?? []));
-            } elseif ($mapType && $type->getName() === 'array') {
-                if (is_array($data[$mapName])) {
-                    $property->setValue($this, array_map(fn ($item) => new $mapType($item), $data[$mapName]));
+                if ($params) {
+                    $property->setValue($this, new $nestedClass($params));
+                    continue;
                 }
-            } else {
-                // 普通字段直接赋值
-                $property->setValue($this, $data[$mapName] ?? null);
+                $property->setValue($this, null);
+                continue;
             }
+
+            // 数组类型
+            if ($mapType && $type->getName() === 'array') {
+                if ($params && is_array($params)) {
+                    $property->setValue($this, array_map(fn ($item) => new $mapType($item), $params));
+                    continue;
+                }
+            }
+
+            // 普通类型及其他情况
+            $property->setValue($this, $data[$mapName] ?? null);
         }
     }
 }

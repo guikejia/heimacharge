@@ -12,25 +12,20 @@ use Guikejia\HeiMaCharge\Exceptions\Exception;
 class SystemDataManagement implements SystemDataManagementInterface
 {
     /**
-     * 1: 车辆品牌列表
+     * 1: 车辆品牌列表.
      */
     public const CAR_MODEL = 1;
 
     /**
-     * 2: 车型列表
+     * 2: 车型列表.
      */
     public const CAR_TYPE = 2;
 
     public function __construct(
         protected HttpClient $http,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param int $type
-     * @param int $page
-     * @param int $page_size
-     * @return array
      * @throws Exception
      */
     public function GetSysData(int $type, int $page = 1, int $page_size = 10): array
