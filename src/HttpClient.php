@@ -275,22 +275,22 @@ class HttpClient
     public function getWebHookData(array $params): array
     {
         // 订单事件
-        $event_type = $params['event_type'];
+        $event_type = (int) ($params['event_type'] ?? 0);
         // 经过Base64编码的加密数据域
-        $data = $params['data'];
+        $data = (string) ($params['data'] ?? '');
         // 随机12位字符，用于加密数据
-        $nonce = $params['nonce'];
+        $nonce = (string) ($params['nonce'] ?? '');
         // 请求发送的时间戳，单位：毫秒
-        $timestamp = $params['timestamp'];
+        $timestamp = (int) ($params['timestamp'] ?? 0);
         // 通过数字签名计算出的签名值经过 base64 编码后的字符串
-        $signature = $params['signature'];
+        $signature = (string) ($params['signature'] ?? '');
 
         $contents = $this->utils->decryptedData($data, $nonce);
         // 业务返回值
         $decryption_data = json_decode($contents, true);
 
         // 校验黑马侧签名
-        $re = $this->utils->verifySignatureWithBH($signature, $data, $event_type, $timestamp, $nonce, 'POST');
+        $re = $this->utils->verifySignatureWithBH($signature, $data, (string)$event_type, $timestamp, $nonce, 'POST');
 
         $this->hook([
             'uri' => sprintf('webhook/%s', $event_type),
@@ -308,7 +308,7 @@ class HttpClient
             throw new ChargeBusinessException('验签失败');
         }
 
-        return $decryption_data;
+        return ['event_type' => $event_type, 'data' => $decryption_data];
     }
 
     protected function create(array $options = []): Client
