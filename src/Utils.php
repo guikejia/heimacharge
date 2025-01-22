@@ -153,7 +153,10 @@ class Utils
         return $plaintext;
     }
 
-    public function verifySignatureWithBH(string $sign, string $data, string $requestPath, int $timestamp, string $nonce, string $method): bool
+    /**
+     * 校验黑马侧数据签名.
+     */
+    public function verifySignatureWithBlackHorse(string $sign, string $data, string $requestPath, int $timestamp, string $nonce, string $method): bool
     {
         $before_md5 = sprintf('%s%s%s%s%s', $method, $requestPath, $timestamp, $nonce, $data);
         $after_md5 = md5($before_md5);

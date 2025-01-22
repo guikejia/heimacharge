@@ -10,6 +10,12 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class WebHookManagement
 {
+    // 订单状态变更事件
+    public const OrderStatusChangeEvent = 1;
+
+    // 订单信息事件
+    public const OrderInfoEvent = 2;
+
     public function __construct(
         protected HttpClient $http,
     ) {}
@@ -23,6 +29,30 @@ class WebHookManagement
             $params = $contents->getParsedBody();
         }
         $params = (array) $params;
+
+        if (! isset($params['event_type'])) {
+            throw new ChargeBusinessException('event_type is invalid');
+        }
+
+        if (! in_array($params['event_type'], [self::OrderStatusChangeEvent, self::OrderInfoEvent])) {
+            throw new ChargeBusinessException('event_type is invalid.');
+        }
+
+        if (empty($params['data'])) {
+            throw new ChargeBusinessException('data is invalid');
+        }
+
+        if (empty($params['nonce'])) {
+            throw new ChargeBusinessException('nonce is invalid');
+        }
+        if (! isset($params['timestamp'])) {
+            throw new ChargeBusinessException('timestamp is invalid');
+        }
+
+        if (! isset($params['signature'])) {
+            throw new ChargeBusinessException('signature is invalid');
+        }
+
         return $this->http->getWebHookData($params);
     }
 

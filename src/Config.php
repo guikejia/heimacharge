@@ -56,4 +56,9 @@ class Config
     {
         return $this->config;
     }
+
+    public function getWebhookRequestPath(): string
+    {
+        return $this->config['webhook_request_path'];
+    }
 }

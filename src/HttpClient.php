@@ -21,6 +21,11 @@ class HttpClient
     // 若为非登录接口返回的错误状态码是 40001、40002、400023 则重新获取token
     public const ERROR_CODES_NEED_RE_LOGIN = [40001, 40002, 40003];
 
+    public const WebHookEventMap = [
+        1 => 'OrderStatusChangeEvent',
+        2 => 'OrderInfoEvent',
+    ];
+
     public function __construct(
         protected ContainerInterface $container,
         protected Utils $utils,
@@ -144,7 +149,7 @@ class HttpClient
             $response_data = json_decode($contents, true);
 
             // 校验黑马侧签名
-            $re = $this->utils->verifySignatureWithBH($ori_contents['signature'], $ori_contents['data'], $uri, $ori_contents['timestamp'], $ori_contents['nonce'], $method);
+            $re = $this->utils->verifySignatureWithBlackHorse($ori_contents['signature'], $ori_contents['data'], $uri, $ori_contents['timestamp'], $ori_contents['nonce'], $method);
             if (! $re) {
                 throw new ChargeBusinessException('验签失败');
             }
@@ -291,10 +296,10 @@ class HttpClient
         $decryption_data = json_decode($contents, true);
 
         // 校验黑马侧签名
-        $re = $this->utils->verifySignatureWithBH($signature, $data, (string) $event_type, $timestamp, $nonce, 'POST');
+        $re = $this->utils->verifySignatureWithBlackHorse($signature, $data, $this->config->getWebhookRequestPath(), $timestamp, $nonce, 'POST');
 
         $this->hook([
-            'uri' => sprintf('webhook/%s', $event_type),
+            'uri' => sprintf('/webhook/%s', self::WebHookEventMap[$event_type] ?? 'unknown[' . $event_type . ']'),
             'method' => 'POST',
             'request_data' => $decryption_data,
             'real_request_data' => $params,
