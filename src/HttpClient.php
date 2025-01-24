@@ -145,14 +145,21 @@ class HttpClient
 
             // 接口原始返回值 data 解密
             $contents = $this->utils->decryptedData($ori_contents['data'], $ori_contents['nonce']);
-            // 业务返回值
-            $response_data = json_decode($contents, true);
 
             // 校验黑马侧签名
             $re = $this->utils->verifySignatureWithBlackHorse($ori_contents['signature'], $ori_contents['data'], $uri, $ori_contents['timestamp'], $ori_contents['nonce'], $method);
             if (! $re) {
                 throw new ChargeBusinessException('验签失败');
             }
+
+            // 业务返回值
+            $response_data = json_decode($contents, true);
+
+
+            if (! is_array($response_data)) {
+                throw new ChargeBusinessException('黑马原力侧接口返回值有误');
+            }
+
             return $response_data;
         } catch (\Throwable $e) {
             $error_code = 0;

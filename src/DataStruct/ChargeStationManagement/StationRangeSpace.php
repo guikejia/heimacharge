@@ -56,5 +56,5 @@ class StationRangeSpace extends DataModel
      * @var RangeQueueInfo
      */
     #[Map('queue_info')]
-    public RangeQueueInfo $queue_info;
+    public ?RangeQueueInfo $queue_info;
 }

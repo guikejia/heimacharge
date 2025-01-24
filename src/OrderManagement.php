@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Guikejia\HeiMaCharge;
 
 use Guikejia\HeiMaCharge\Contracts\OrderManagementInterface;
+use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\StationQueueInfo;
 use Guikejia\HeiMaCharge\DataStruct\OrderManagement\ChargeStation;
 use Guikejia\HeiMaCharge\DataStruct\OrderManagement\OrderInfo;
 use Guikejia\HeiMaCharge\DataStruct\OrderManagement\OrderQueueInfo;
@@ -71,5 +72,11 @@ class OrderManagement implements OrderManagementInterface
             'start_date' => $start_date,
             'end_date' => $end_date,
         ]);
+    }
+
+    public function GetQueueInfo(int $station_id, string $space_no): StationQueueInfo
+    {
+        $queue_info = $this->http->get('/v2/orders/queue_info/' . $station_id . '/' . $space_no);
+        return new StationQueueInfo($queue_info);
     }
 }

@@ -60,8 +60,8 @@ class OrderInfo extends DataModel
     /**
      * 用户手机号.
      */
-    #[Map('phone')]
-    public ?string $phone;
+    #[Map('phone_no')]
+    public ?string $phone_no;
 
     /**
      * 用户车牌号.

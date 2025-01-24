@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Guikejia\HeiMaCharge\Contracts;
 
+use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\StationQueueInfo;
 use Guikejia\HeiMaCharge\DataStruct\OrderManagement\ChargeStation;
 use Guikejia\HeiMaCharge\DataStruct\OrderManagement\OrderInfo;
 use Guikejia\HeiMaCharge\DataStruct\OrderManagement\OrderUser;
@@ -59,4 +60,9 @@ interface OrderManagementInterface
      * @return mixed
      */
     public function OrderStatistics(?string $start_date, ?string $end_date): mixed;
+
+    /**
+     * 获取站点车位排队信息.
+     */
+    public function GetQueueInfo(int $station_id, string $space_no): StationQueueInfo;
 }
