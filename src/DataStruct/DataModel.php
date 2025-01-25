@@ -21,7 +21,7 @@ class DataModel
             $type = $property->getType();
             $params = $data[$mapName] ?? null;
 
-            // 内置类型
+            // 参数 映射 至 php内置类
             if ($type && ! $type->isBuiltin()) {
                 $nestedClass = $type->getName();
                 if ($params) {
@@ -32,7 +32,7 @@ class DataModel
                 continue;
             }
 
-            // 数组类型
+            // 数组类型 映至 其他数据结构
             if ($mapType && $type->getName() === 'array') {
                 if ($params && is_array($params)) {
                     $property->setValue($this, array_map(fn ($item) => new $mapType($item), $params));

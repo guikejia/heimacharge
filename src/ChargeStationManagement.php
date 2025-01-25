@@ -35,7 +35,6 @@ class ChargeStationManagement implements ChargeStationManagementInterface
     public function GetStationInfo(int $station_id): StationInfo
     {
         $station = $this->http->get('/v2/stations/' . $station_id);
-
         return new StationInfo($station);
     }
 

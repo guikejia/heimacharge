@@ -74,9 +74,9 @@ class OrderManagement implements OrderManagementInterface
         ]);
     }
 
-    public function GetQueueInfo(int $station_id, string $space_no): StationQueueInfo
+    public function GetQueueInfo(int $station_id, int $range_id): StationQueueInfo
     {
-        $queue_info = $this->http->get('/v2/orders/queue_info/' . $station_id . '/' . $space_no);
+        $queue_info = $this->http->get('/v2/orders/queue_info/' . $station_id . '/' . $range_id);
         return new StationQueueInfo($queue_info);
     }
 }

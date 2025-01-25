@@ -23,7 +23,7 @@ class StationQueueInfo extends DataModel
      * 3 - 无可用设备，可排队
      */
     #[Map('code')]
-    public string $code;
+    public int $code;
 
     /**
      * 站点 id.

@@ -64,5 +64,5 @@ interface OrderManagementInterface
     /**
      * 获取站点车位排队信息.
      */
-    public function GetQueueInfo(int $station_id, string $space_no): StationQueueInfo;
+    public function GetQueueInfo(int $station_id, int $range_id): StationQueueInfo;
 }
