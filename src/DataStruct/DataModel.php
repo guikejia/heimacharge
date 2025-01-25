@@ -21,7 +21,7 @@ class DataModel
             $type = $property->getType();
             $params = $data[$mapName] ?? null;
 
-            // 参数 映射 至 php内置类
+            // 参数 映射 至 php类
             if ($type && ! $type->isBuiltin()) {
                 $nestedClass = $type->getName();
                 if ($params) {

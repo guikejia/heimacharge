@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Guikejia\HeiMaCharge;
 
 use Guikejia\HeiMaCharge\Contracts\ChargeStationManagementInterface;
+use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\CreateStationData;
 use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\StationInfo;
 use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\StationRangeSpace;
 
@@ -58,5 +59,33 @@ class ChargeStationManagement implements ChargeStationManagementInterface
         $space = $this->http->get('/v2/stations/' . $station_id . '/spaces/' . $space_id);
 
         return new StationRangeSpace($space);
+    }
+
+
+    public function CreateStation(CreateStationData $data): array
+    {
+        $stations = $this->http->post('/v2/stations', [
+            'name' => $data->name,
+            'description' => $data->description,
+            'address' => $data->address,
+            'city' => $data->city,
+            'service_tel' => $data->service_tel,
+            'status' => $data->status,
+            'park_type' => $data->park_type,
+            'park_num' => $data->park_num,
+            'operate_start_date' => $data->operate_start_date,
+            'operate_end_date' => $data->operate_end_date,
+            'latitude' => $data->latitude,
+            'longitude' => $data->longitude,
+            'park_fee_free' => $data->park_fee_free,
+            'fast_charge_fee_details' => $data->fast_charge_fee_details,
+            'slow_charge_fee_details' => $data->slow_charge_fee_details,
+            'super_charge_fee_details' => $data->super_charge_fee_details,
+            'logos' => $data->logos,
+        ]);
+
+        return [
+            'id' => $stations['id'],
+        ];
     }
 }

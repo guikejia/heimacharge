@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Guikejia\HeiMaCharge\Contracts;
 
+use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\CreateStationData;
 use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\StationInfo;
 use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\StationQueueInfo;
 use Guikejia\HeiMaCharge\DataStruct\ChargeStationManagement\StationRangeSpace;
@@ -29,4 +30,9 @@ interface ChargeStationManagementInterface
      * 获取站点车位信息.
      */
     public function GetStationSpace(int $station_id, int $space_id): StationRangeSpace;
+
+    /**
+     * 新建站点.
+     */
+    public function CreateStation(CreateStationData $data): array;
 }
