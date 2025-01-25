@@ -23,4 +23,19 @@ interface DeviceManagementInterface
      * 创建设备.
      */
     public function CreateDevice(CreateDeviceData $data): array;
+
+    /**
+     * 批量将设备绑定在某个站点和区域上.
+     */
+    public function BatchBindDevice(int $station_id, int $range_id, array $device_ids): array;
+
+    /**
+     * 删除设备.
+     */
+    public function DeleteDevice(int $device_id): array;
+
+    /**
+     * 批量解绑设备.
+     */
+    public function BatchUnBindDevice(array $device_ids): array;
 }

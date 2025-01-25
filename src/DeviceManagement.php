@@ -35,11 +35,8 @@ class DeviceManagement implements DeviceManagementInterface
         return new DeviceInfo($device);
     }
 
-
     /**
      * 创建新设备.
-     * @param CreateDeviceData $data
-     * @return array
      */
     public function CreateDevice(CreateDeviceData $data): array
     {
@@ -52,6 +49,38 @@ class DeviceManagement implements DeviceManagementInterface
             'protocol' => $data->protocol,
             'status' => $data->status,
         ]);
-        return $device['id'];
+        return ['id' => $device['id']];
+    }
+
+    /**
+     * 批量将设备绑定在某个站点和区域上.
+     */
+    public function BatchBindDevice(int $station_id, int $range_id, array $device_ids): array
+    {
+        $device = $this->http->patch('/v2/devices/bind', [
+            'station_id' => $station_id,
+            'range_id' => $range_id,
+            'device_ids' => $device_ids,
+        ]);
+        return ['id' => $device['id']];
+    }
+
+    /**
+     * 删除设备.
+     */
+    public function DeleteDevice(int $device_id): array
+    {
+        return $this->http->delete('/v2/devices/' . $device_id);
+    }
+
+    /**
+     * 批量解绑设备.
+     * @param mixed $device_ids
+     */
+    public function BatchUnBindDevice($device_ids): array
+    {
+        return $this->http->patch('/v2/unbind', [
+            'device_ids' => $device_ids,
+        ]);
     }
 }

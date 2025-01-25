@@ -234,6 +234,11 @@ class HttpClient
         return $this->request(method: 'PUT', uri: $uri, options: $options);
     }
 
+    public function patch($uri, array $options = []): array
+    {
+        return $this->request(method: 'PATCH', uri: $uri, options: $options);
+    }
+
     public function delete($uri): mixed
     {
         return $this->request(method: 'DELETE', uri: $uri);
