@@ -133,4 +133,14 @@ class ChargeStationManagement implements ChargeStationManagementInterface
     {
         return $this->http->delete('/v2/stations/' . $station_id);
     }
+
+    /**
+     * 获取站点区域列表.
+     * @param int $station_id
+     * @return array
+     */
+    public function ListStationRange(int $station_id): array
+    {
+        return $this->http->get('/v2/stations/' . $station_id . '/range/list');
+    }
 }
