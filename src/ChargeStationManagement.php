@@ -109,4 +109,21 @@ class ChargeStationManagement implements ChargeStationManagementInterface
     {
         return $this->http->post('/v2/stations/' . $station_id . '/' . $range_id . '/spaces/batch', $batch);
     }
+
+    /**
+     * 创建一个站点区域
+     * @param int $station_id 站点 ID
+     * @param string $name 区域名称
+     * @param int $range_type 区域类型  1:自动驾驶区域 2:非自动驾驶区域
+     * @param string $description 区域描述
+     * @return array
+     */
+    public function CreateStationRange(int $station_id, string $name, int $range_type, string $description): array
+    {
+        return $this->http->post('/v2/stations/' . $station_id . '/range', [
+            'name' => $name,
+            'range_type' => $range_type,
+            'description' => $description,
+        ]);
+    }
 }
