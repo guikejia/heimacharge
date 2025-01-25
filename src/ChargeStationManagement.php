@@ -61,7 +61,6 @@ class ChargeStationManagement implements ChargeStationManagementInterface
         return new StationRangeSpace($space);
     }
 
-
     public function CreateStation(CreateStationData $data): array
     {
         $stations = $this->http->post('/v2/stations', [
@@ -87,5 +86,27 @@ class ChargeStationManagement implements ChargeStationManagementInterface
         return [
             'id' => $stations['id'],
         ];
+    }
+
+    /**
+     * @param int $station_id 站点 ID
+     * @param int $range_id 区域 ID
+     * @param string $space_no 车位号
+     * @param string $space_code 车位编码
+     */
+    public function CreateStationSpace(int $station_id, int $range_id, string $space_no, string $space_code): array
+    {
+        $space = $this->http->post('/v2/stations/' . $station_id . '/' . $range_id . '/spaces', [
+            'space_no' => $space_no,
+            'space_code' => $space_code,
+        ]);
+        return [
+            'id' => $space['id'],
+        ];
+    }
+
+    public function BatchCreateStationSpaces(int $station_id, int $range_id, array $batch): array
+    {
+        return $this->http->post('/v2/stations/' . $station_id . '/' . $range_id . '/spaces/batch', $batch);
     }
 }

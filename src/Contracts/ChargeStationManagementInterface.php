@@ -35,4 +35,23 @@ interface ChargeStationManagementInterface
      * 新建站点.
      */
     public function CreateStation(CreateStationData $data): array;
+
+    /**
+     * 站点车位
+     * @param int $station_id
+     * @param int $range_id
+     * @param string $space_no
+     * @param string $space_code
+     * @return array
+     */
+    public function CreateStationSpace(int $station_id, int $range_id, string $space_no, string $space_code): array;
+
+    /**
+     * 批量新建站点
+     * @param int $station_id
+     * @param int $range_id
+     * @param array $batch
+     * @return array
+     */
+    public function BatchCreateStationSpaces(int $station_id, int $range_id, array $batch): array
 }
