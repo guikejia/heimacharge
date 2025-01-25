@@ -65,4 +65,12 @@ interface ChargeStationManagementInterface
      * @return array
      */
     public function CreateStationRange(int $station_id, string $name, int $range_type, string $description): array;
+
+
+    /**
+     * 删除一个站点
+     * @param int $station_id
+     * @return array
+     */
+    public function DeleteStation(int $station_id): array;
 }

@@ -116,7 +116,6 @@ class ChargeStationManagement implements ChargeStationManagementInterface
      * @param string $name 区域名称
      * @param int $range_type 区域类型  1:自动驾驶区域 2:非自动驾驶区域
      * @param string $description 区域描述
-     * @return array
      */
     public function CreateStationRange(int $station_id, string $name, int $range_type, string $description): array
     {
@@ -125,5 +124,13 @@ class ChargeStationManagement implements ChargeStationManagementInterface
             'range_type' => $range_type,
             'description' => $description,
         ]);
+    }
+
+    /**
+     * 删除站点.
+     */
+    public function DeleteStation(int $station_id): array
+    {
+        return $this->http->delete('/v2/stations/' . $station_id);
     }
 }
