@@ -60,14 +60,14 @@ class StationInfo extends DataModel
     /**
      * 站点时段费用详情.
      */
-    #[Map('fast_charge_fee_datails', type: ChargeFeeDetail::class)]
-    public ?array $fast_charge_fee_datails;
+    #[Map('fast_charge_fee_details', type: ChargeFeeDetail::class)]
+    public ?array $fast_charge_fee_details;
 
-    #[Map('slow_charge_fee_datails', type: ChargeFeeDetail::class)]
-    public ?array $slow_charge_fee_datails;
+    #[Map('slow_charge_fee_details', type: ChargeFeeDetail::class)]
+    public ?array $slow_charge_fee_details;
 
-    #[Map('super_charge_fee_datails', type: ChargeFeeDetail::class)]
-    public ?array $super_charge_fee_datails;
+    #[Map('super_charge_fee_details', type: ChargeFeeDetail::class)]
+    public ?array $super_charge_fee_details;
 
     #[Map('logos')]
     public ?array $logos;
