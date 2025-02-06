@@ -7,7 +7,7 @@ namespace Guikejia\HeiMaCharge;
 use Guikejia\HeiMaCharge\Exceptions\ChargeBusinessException;
 use Guikejia\HeiMaCharge\Exceptions\Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
 use Hyperf\Guzzle\ClientFactory;
 use Psr\Container\ContainerInterface;
 
@@ -155,7 +155,6 @@ class HttpClient
             // 业务返回值
             $response_data = json_decode($contents, true);
 
-
             if (! is_array($response_data)) {
                 throw new ChargeBusinessException('黑马原力侧接口返回值有误');
             }
@@ -169,7 +168,8 @@ class HttpClient
             $response_data = ['error_code' => $error_code, 'error_msg' => $error_msg];
             $real_response_data = $real_response_data ?? $error_msg;
             $http_status_code = $http_status_code ?? 0;
-            if ($e instanceof ClientException) {
+
+            if ($e instanceof ServerException) {
                 $response = $e->getResponse();
                 $http_status_code = $response->getStatusCode();
                 if ($http_status_code != 200) {
