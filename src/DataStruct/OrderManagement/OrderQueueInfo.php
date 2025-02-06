@@ -10,23 +10,20 @@ use Guikejia\HeiMaCharge\DataStruct\DataModel;
 class OrderQueueInfo extends DataModel
 {
     /**
-     * 订单期望等待时间
-     * @var int
+     * 订单期望等待时间.
      */
     #[Map('expected_wait_time')]
-    private ?int $expected_wait_time;
+    public ?int $expected_wait_time;
 
     /**
-     * 排队位置，若大于0，则说明该订单在排队中
-     * @var int
+     * 排队位置，若大于0，则说明该订单在排队中.
      */
     #[Map('position')]
-    private ?int $position;
+    public ?int $position;
 
     /**
-     * 订单已等待时间
-     * @var int
+     * 订单已等待时间.
      */
     #[Map('wait_time')]
-    private ?int $wait_time;
+    public ?int $wait_time;
 }
