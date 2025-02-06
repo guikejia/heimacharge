@@ -7,6 +7,7 @@ namespace Guikejia\HeiMaCharge;
 use Guikejia\HeiMaCharge\Exceptions\ChargeBusinessException;
 use Guikejia\HeiMaCharge\Exceptions\Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use Hyperf\Guzzle\ClientFactory;
 use Psr\Container\ContainerInterface;
@@ -169,7 +170,7 @@ class HttpClient
             $real_response_data = $real_response_data ?? $error_msg;
             $http_status_code = $http_status_code ?? 0;
 
-            if ($e instanceof ServerException) {
+            if ($e instanceof ServerException || $e instanceof ClientException) {
                 $response = $e->getResponse();
                 $http_status_code = $response->getStatusCode();
                 if ($http_status_code != 200) {
@@ -181,7 +182,7 @@ class HttpClient
                         $error_msg = $error_content_arr['message'] ?? $e->getMessage();
                         $response_data = ['error_code' => $error_code, 'error_msg' => $error_msg];
                     }
-                    // 若为非登录接口返回的错误状态码是 40001、40002、400023 则重新获取token
+                    // 若为非登录接口返回的错误状态码是 40001、40002、40003 则重新获取token
                     if ($uri != self::LOGIN_URI && in_array($error_code, self::ERROR_CODES_NEED_RE_LOGIN)) {
                         $is_need_re_login = true;
                     }
