@@ -19,7 +19,7 @@ class HttpClient
     // 接口请求失败重试次数
     public const TRY_COUNT = 3;
 
-    // 若为非登录接口返回的错误状态码是 40001、40002、400023 则重新获取token
+    // 若为非登录接口返回的错误状态码是 40001、40002、40003 则重新获取token
     public const ERROR_CODES_NEED_RE_LOGIN = [40001, 40002, 40003];
 
     public const WebHookEventMap = [
