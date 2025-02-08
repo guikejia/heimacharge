@@ -99,7 +99,7 @@ class HttpClient
             ];
             $_options['json'] = $body;
         } else {
-            $_options['query'] = $options['query'];
+            $_options['query'] = $options['query'] ?? [];
             $_options['headers']['x-nonce'] = $nonce;
             $_options['headers']['x-signature'] = $signature;
             $_options['headers']['x-timestamp'] = $timestamp;
