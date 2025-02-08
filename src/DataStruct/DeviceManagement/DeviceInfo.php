@@ -94,21 +94,21 @@ class DeviceInfo extends DataModel
      * @var float
      */
     #[Map('rated_current')]
-    public float $rated_current;
+    public ?float $rated_current;
 
     /**
      * 设备额定功率
      * @var float
      */
     #[Map('rated_power')]
-    public float $rated_power;
+    public ?float $rated_power;
 
     /**
      * 设备额定电压
      * @var float
      */
     #[Map('rated_voltage')]
-    public float $rated_voltage;
+    public ?float $rated_voltage;
 
     /**
      * 站点 id
