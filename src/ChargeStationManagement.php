@@ -39,9 +39,12 @@ class ChargeStationManagement implements ChargeStationManagementInterface
         return new StationInfo($station);
     }
 
-    public function ListStationSpaces(int $station_id): array
+    public function ListStationSpaces(int $station_id, int $page = 1, int $page_size = 10): array
     {
-        $spaces = $this->http->get('/v2/stations/' . $station_id . '/spaces/list');
+        $spaces = $this->http->get('/v2/stations/' . $station_id . '/spaces/list', [
+            'page_no' => $page,
+            'page_size' => $page_size,
+        ]);
 
         return [
             'page_no' => $spaces['page_no'],
@@ -136,8 +139,6 @@ class ChargeStationManagement implements ChargeStationManagementInterface
 
     /**
      * 获取站点区域列表.
-     * @param int $station_id
-     * @return array
      */
     public function ListStationRange(int $station_id): array
     {

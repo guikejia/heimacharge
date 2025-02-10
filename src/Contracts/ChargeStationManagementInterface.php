@@ -23,7 +23,7 @@ interface ChargeStationManagementInterface
     /**
      * 站点车位列表.
      */
-    public function ListStationSpaces(int $station_id): array;
+    public function ListStationSpaces(int $station_id, int $page = 1, int $page_size = 10): array;
 
     /**
      * 获取站点车位信息.
