@@ -120,5 +120,5 @@ class OrderInfo extends DataModel
      * 金额明细 @todo.
      */
     #[Map('period_fees')]
-    private ?PeriodFee $period_fees;
+    public ?PeriodFee $period_fees;
 }

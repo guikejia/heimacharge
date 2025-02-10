@@ -165,4 +165,25 @@ class Utils
         $key = openssl_get_publickey($public_key);
         return (bool) openssl_verify($hex2bin_md5, base64_decode($sign), $key, OPENSSL_ALGO_SHA256);
     }
+
+    /**
+     * 对象转数组.
+     * @return array|mixed
+     */
+    public static function objectToArray($obj)
+    {
+        // 如果是对象，将其转换为数组
+        if (is_object($obj)) {
+            $obj = get_object_vars($obj);
+            var_dump($obj);
+        }
+
+        // 如果是数组，递归地处理其中的每个元素
+        if (is_array($obj)) {
+            foreach ($obj as $key => $value) {
+                $obj[$key] = self::objectToArray($value);
+            }
+        }
+        return $obj;
+    }
 }
