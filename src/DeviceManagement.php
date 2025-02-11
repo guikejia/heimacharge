@@ -23,7 +23,7 @@ class DeviceManagement implements DeviceManagementInterface
 
         return array_map(function ($device) {
             return new DeviceInfo($device);
-        }, $devices);
+        }, (array) ($devices['results'] ?? []));
     }
 
     public function GetDeviceInfo(int $device_id, ?string $real_status): DeviceInfo
