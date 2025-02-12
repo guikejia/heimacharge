@@ -106,7 +106,7 @@ class HttpClient
             $_options['headers']['x-client-id'] = $this->config->getClientId();
 
             // header头拼接业务参数
-            foreach ($options['query'] as $k => $v) {
+            foreach (($options['query'] ?? []) as $k => $v) {
                 $_options['headers'][$k] = $v;
             }
         }
