@@ -175,7 +175,6 @@ class Utils
         // 如果是对象，将其转换为数组
         if (is_object($obj)) {
             $obj = get_object_vars($obj);
-            var_dump($obj);
         }
 
         // 如果是数组，递归地处理其中的每个元素
