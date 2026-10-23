@@ -66,7 +66,7 @@ class HttpClient
             }
         }
 
-        $timestamp = (int) (microtime(true) * 1000);
+        $timestamp = (string) (int) (microtime(true) * 1000);
         $nonce = $this->utils->getNonce(12);
         $exec_result = 'SUCCESS';
         $exec_msg = '';
@@ -107,7 +107,7 @@ class HttpClient
 
             // header头拼接业务参数
             foreach (($options['query'] ?? []) as $k => $v) {
-                $_options['headers'][$k] = $v;
+                $_options['headers'][$k] = (string)$v;
             }
         }
 
